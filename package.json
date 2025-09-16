@@ -21,7 +21,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/mamang126/simple-workflow-js.git"
+    "url": "git+https://github.com/mamang126/simple-workflow-js.git"
   },
   "keywords": [
     "workflow",
