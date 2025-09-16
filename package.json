@@ -1,6 +1,6 @@
 {
   "name": "simple-workflow-js",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A lightweight, modular workflow/task orchestration library for JavaScript and TypeScript.",
   "main": "./index.js",
   "types": "./index.ts",

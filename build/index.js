@@ -59,6 +59,7 @@ class FlowManager {
             this.debug(`	[${task.id}] Waiting for dependency:`, dep);
             taskProm[task.id] = depTask;
           }
+          depsPromArray.push(depTask);
         }
         await Promise.allSettled(depsPromArray);
         this.debug(`	[${task.id}] All dependencies resolved:`, task.options.deps);
