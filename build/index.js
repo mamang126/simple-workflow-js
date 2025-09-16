@@ -44,23 +44,26 @@ class FlowManager {
     let taskProm = {};
     let context = initialContext.context;
     this.detectCircularDependencys();
+    this.taskList.forEach((task) => {
+      taskProm[task.id] = Promise.withResolvers();
+    });
     this.taskList.forEach(async (task) => {
-      const { resolve, promise, reject } = Promise.withResolvers();
       const timeout = setTimeout(() => {
-        reject(new Error(`Task ${task.id} timed out`));
+        taskProm[task.id].reject(new Error(`Task ${task.id} timed out`));
       }, this.options.timeout);
-      taskProm[task.id] = promise;
       this.debug(`Starting task: ${task.id}`);
       if (task.options.deps) {
         let depsPromArray = [];
         for (const dep of task.options.deps) {
-          const depTask = taskProm[dep];
+          const depTask = taskProm[dep].promise;
           if (!depTask) {
-            this.debug(`	[${task.id}] Waiting for dependency:`, dep);
-            taskProm[task.id] = depTask;
+            taskProm[task.id].reject(new Error(`Task ${task.id} dependency ${dep} not found`));
+            clearTimeout(timeout);
+            return;
           }
           depsPromArray.push(depTask);
         }
+        this.debug(`	[${task.id}] Waiting for dependencies:`, task.options.deps);
         await Promise.allSettled(depsPromArray);
         this.debug(`	[${task.id}] All dependencies resolved:`, task.options.deps);
       }
@@ -69,9 +72,9 @@ class FlowManager {
         response = await task.exec({ context });
       } catch (error) {
         if (error instanceof Error) {
-          reject(new Error(`Task ${task.id} failed: ${error.message}`));
+          taskProm[task.id].reject(new Error(`Task ${task.id} failed: ${error.message}`));
         } else {
-          reject(new Error(`Task ${task.id} failed`));
+          taskProm[task.id].reject(new Error(`Task ${task.id} failed`));
         }
       } finally {
         clearTimeout(timeout);
@@ -79,10 +82,10 @@ class FlowManager {
       context[task.id] = response;
       Object.freeze(context[task.id]);
       this.debug(`Task executed: ${task.id}`, response);
-      resolve(response);
+      taskProm[task.id].resolve(response);
     });
     this.debug("Finishing flow, waiting for all tasks to complete...");
-    const ret = await Promise.allSettled(Object.values(taskProm));
+    const ret = await Promise.allSettled(Object.values(taskProm).map((p) => p.promise));
     this.debug("All tasks completed.");
     if (ret.every((r) => r.status === "fulfilled")) {
       this.debug("Flow completed successfully.");

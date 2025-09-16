@@ -1,4 +1,4 @@
-import { expect, test, describe, it } from "bun:test";
+import { expect, test, describe, it, jest } from "bun:test";
 import { FlowManager } from "./flow-manager";
 import type { TaskOutput } from "./models";
 
@@ -157,6 +157,57 @@ describe("FlowManager", () => {
         },
       });
       await expect(fm.run()).rejects.toThrow(/Task failed/);
+    });
+
+    it("Real use case", async () => {
+      const actions = [
+        { id: "input", deps: [], spy: jest.fn() },
+        { id: "second", deps: ["input"], spy: jest.fn() },
+        { id: "third", deps: ["input"], spy: jest.fn() },
+        {
+          id: "forth",
+          deps: ["second", "third"],
+          spy: jest.fn(),
+        },
+        { id: "output", deps: ["forth"], spy: jest.fn() },
+      ];
+      const fm = new FlowManager("Main", {
+        debug: true,
+      });
+      actions.forEach((node) => {
+        fm.addTask(node.id, {
+          deps: node.deps,
+          executor: (input) => {
+            return new Promise((resolve) => {
+              setTimeout(() => {
+                input.context[node.id] = 1;
+                node.spy();
+                resolve({ value: true });
+              }, 1000);
+            });
+          },
+        });
+      });
+      const response: TaskOutput = await fm.run();
+      actions.forEach((node) => {
+        expect(response[node.id].valueOf()).toEqual({ value: true });
+        expect(node.spy).toHaveBeenCalled();
+      });
+      const inputOrder = actions.find((a) => a.id === "input")?.spy.mock
+        .invocationCallOrder[0];
+      const secondOrder = actions.find((a) => a.id === "second")?.spy.mock
+        .invocationCallOrder[0];
+      const thirdOrder = actions.find((a) => a.id === "third")?.spy.mock
+        .invocationCallOrder[0];
+      const fourthOrder = actions.find((a) => a.id === "forth")?.spy.mock
+        .invocationCallOrder[0];
+      const outputOrder = actions.find((a) => a.id === "output")?.spy.mock
+        .invocationCallOrder[0];
+      expect(inputOrder).toBeLessThan(secondOrder!);
+      expect(inputOrder).toBeLessThan(thirdOrder!);
+      expect(secondOrder).toBeLessThan(fourthOrder!);
+      expect(thirdOrder).toBeLessThan(fourthOrder!);
+      expect(fourthOrder).toBeLessThan(outputOrder!);
     });
   });
 });
