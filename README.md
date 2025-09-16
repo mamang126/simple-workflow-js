@@ -1,4 +1,4 @@
-# test-flowed
+# simple-workflow-js
 
 A lightweight, modular workflow/task orchestration library for JavaScript and TypeScript, built to run on [Bun](https://bun.sh). Define, sequence, and execute tasks (sync or async) with dependency management and context passing.
 
