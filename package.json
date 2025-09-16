@@ -4,6 +4,10 @@
   "description": "A lightweight, modular workflow/task orchestration library for JavaScript and TypeScript.",
   "main": "./index.js",
   "types": "./index.ts",
+  "scripts": {
+    "build": "bun build index.ts --outdir ./build --target bun --external typescript",
+    "test": "bun test"
+  },
   "exports": {
     ".": {
       "import": "./index.ts",

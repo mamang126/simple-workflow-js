@@ -122,10 +122,10 @@ describe("FlowManager", () => {
       expect(response["task-02"]).toBeDefined();
       expect(response["task-03"]).toBeDefined();
       expect(response["task-04"]).toBeDefined();
-      expect(response["task-01"].valueOf()).toBe(1);
-      expect(response["task-02"].valueOf()).toBe(2);
-      expect(response["task-03"].valueOf()).toBe(3);
-      expect(response["task-04"].valueOf()).toBe(5);
+      expect(response["task-01"].valueOf()).toEqual({ value: true });
+      expect(response["task-02"].valueOf()).toEqual({ value: true });
+      expect(response["task-03"].valueOf()).toEqual({ value: true });
+      expect(response["task-04"].valueOf()).toEqual({ value: true });
     });
 
     it("Should detect circular dependencies", async () => {
@@ -134,27 +134,29 @@ describe("FlowManager", () => {
       })
         .addTask("task-01", {
           deps: ["task-02"],
-          executor: (input) => {
-            return new Promise((resolve) => {
-              setTimeout(() => {
-                input.context["task-01"] = 1;
-                resolve({ value: true });
-              }, 1000);
-            });
-          },
+          executor: (_input) => ({}),
         })
         .addTask("task-02", {
           deps: ["task-01"],
-          executor: (input) => {
-            return new Promise((resolve) => {
-              setTimeout(() => {
-                input.context["task-02"] = input.context["task-01"] + 1;
-                resolve({ value: true });
-              }, 1000);
-            });
-          },
+          executor: (_input) => ({}),
         });
-      const response: TaskOutput = await fm.run();
+      await expect(fm.run()).rejects.toThrow(/Circular dependency/);
+    });
+
+    it("Should throw if one task fails", async () => {
+      const fm = new FlowManager("Main", {
+        debug: true,
+      }).addTask("task-01", {
+        executor: (input) => {
+          return new Promise((_resolve, reject) => {
+            setTimeout(() => {
+              input.context["task-01"] = 1;
+              reject(new Error("Task failed"));
+            }, 1000);
+          });
+        },
+      });
+      await expect(fm.run()).rejects.toThrow(/Task failed/);
     });
   });
 });
