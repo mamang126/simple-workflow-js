@@ -1,69 +1,64 @@
 # test-flowed
 
-A lightweight workflow/task orchestration library for JavaScript and TypeScript, built to run on [Bun](https://bun.sh). It allows you to define, sequence, and execute tasks (both synchronous and asynchronous) in series or parallel, with context passing and dependency management.
+A lightweight, modular workflow/task orchestration library for JavaScript and TypeScript, built to run on [Bun](https://bun.sh). Define, sequence, and execute tasks (sync or async) with dependency management and context passing.
+
+---
 
 ## Features
 
-- **Task and Flow Management**: Compose tasks and run them in order or in parallel.
+- **Task and Flow Management**: Compose and run tasks in order or in parallel.
 - **Context Passing**: Each task receives and can modify a shared context object.
 - **Async Support**: Tasks can be synchronous or asynchronous.
-- **Parallel Execution**: Run multiple tasks concurrently and merge their results.
+- **Dependency Management**: Specify dependencies between tasks.
 - **TypeScript Support**: Fully typed interfaces for tasks and flows.
 
-## Usage
+---
 
-### Install dependencies
-
-```bash
-bun install
-```
-
-### Run the project
+## Installation
 
 ```bash
-bun run index.js
+bun install simple-workflow-js
 ```
 
-### Example
+---
 
-See `flow-manager.spec.ts` for usage examples and tests:
+## Quick Start
 
 ```typescript
-import { FlowManager, Task } from "./flow-manager";
+import { FlowManager, Task } from "simple-workflow-js";
 
-const fm = new FlowManager("Main");
-fm.addTask(
-  new Task("init", {
-    executor: (input) => ({
-      ...input,
-      context: { ...input.context, value: 1 },
-    }),
-  })
-)
+const flow = new FlowManager("Example")
   .addTask(
-    new Task("step1", {
+    new Task("init", {
       executor: (input) => ({
-        ...input,
-        context: { ...input.context, value: input.context.value + 10 },
+        context: { ...input.context, value: 1 },
       }),
     })
   )
-  .run();
+  .addTask(
+    new Task("step1", {
+      executor: (input) => ({
+        context: { ...input.context, value: input.context.value + 10 },
+      }),
+    })
+  );
+
+flow.run().then((result) => {
+  console.log(result.context); // { value: 11 }
+});
 ```
 
-### Advanced Example: Nested Workflow
+## Advanced Example: Nested Workflow
 
 You can nest workflows by creating a main workflow and, inside a task, running another workflow. This allows for modular and reusable orchestration logic.
 
 ```typescript
-import { FlowManager, Task } from "./flow-manager";
+import { FlowManager, Task } from "test-flowed";
 
-// Define a sub-workflow
 const subFlow = new FlowManager("SubFlow")
   .addTask(
     new Task("sub-task-1", {
       executor: (input) => ({
-        ...input,
         context: { ...input.context, subValue: 100 },
       }),
     })
@@ -71,18 +66,15 @@ const subFlow = new FlowManager("SubFlow")
   .addTask(
     new Task("sub-task-2", {
       executor: (input) => ({
-        ...input,
         context: { ...input.context, subValue: input.context.subValue + 50 },
       }),
     })
   );
 
-// Define the main workflow
 const mainFlow = new FlowManager("MainFlow")
   .addTask(
     new Task("init", {
       executor: (input) => ({
-        ...input,
         context: { ...input.context, value: 1 },
       }),
     })
@@ -90,13 +82,8 @@ const mainFlow = new FlowManager("MainFlow")
   .addTask(
     new Task("nested", {
       executor: async (input) => {
-        // Run the sub-workflow inside this task
-        const subResult = await subFlow.run({
-          context: input.context,
-          outputs: {},
-        });
+        const subResult = await subFlow.run({ context: input.context });
         return {
-          ...input,
           context: { ...input.context, ...subResult.context },
         };
       },
@@ -105,7 +92,6 @@ const mainFlow = new FlowManager("MainFlow")
   .addTask(
     new Task("final", {
       executor: (input) => ({
-        ...input,
         context: {
           ...input.context,
           value: input.context.value + input.context.subValue,
@@ -119,11 +105,16 @@ mainFlow.run().then((result) => {
 });
 ```
 
+---
+
 ## Project Structure
 
-- `flow-manager.ts`: Core library for defining and running tasks and flows.
-- `flow-manager.spec.ts`: Tests and usage examples.
-- `index.js` / `index.ts`: Entry points.
+- `src/flow-manager.ts`: Core library for defining and running tasks and flows.
+- `src/task.ts`: Task class implementation.
+- `src/types.ts`: Type definitions and interfaces.
+- `index.ts`: Entry point for npm consumers.
+
+---
 
 ## License
 

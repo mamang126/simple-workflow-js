@@ -1,5 +1,6 @@
 import { expect, test, describe, it } from "bun:test";
-import { FlowManager, Task, type TaskOutput } from "./flow-manager";
+import { FlowManager } from "./flow-manager";
+import type { TaskOutput } from "./models";
 
 describe("FlowManager", () => {
   describe("Definition", () => {

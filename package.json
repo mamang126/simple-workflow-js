@@ -1,19 +1,43 @@
 {
-  "name": "test-flowed",
+  "name": "simple-workflow-js",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "start": "bun index.ts"
+  "description": "A lightweight, modular workflow/task orchestration library for JavaScript and TypeScript.",
+  "main": "./index.js",
+  "types": "./index.ts",
+  "exports": {
+    ".": {
+      "import": "./index.ts",
+      "require": "./index.js"
+    }
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "files": [
+    "index.ts",
+    "index.js",
+    "src/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mamang126/simple-workflow-js.git"
+  },
+  "keywords": [
+    "workflow",
+    "orchestration",
+    "task",
+    "typescript",
+    "bun",
+    "automation"
+  ],
+  "author": "mamang126",
+  "license": "Apache-2.0",
   "type": "module",
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "^1.2.22"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
-  }
+  },
+  "bugs": {
+    "url": "https://github.com/mamang126/simple-workflow-js/issues"
+  },
+  "homepage": "https://github.com/mamang126/simple-workflow-js#readme"
 }

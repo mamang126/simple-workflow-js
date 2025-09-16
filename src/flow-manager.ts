@@ -1,49 +1,39 @@
-export type TaskContext = Record<string, any>;
+import type {
+  FlowManagerOptions,
+  TaskOptions,
+  TaskInput,
+  TaskOutput,
+  TaskContext,
+} from "./models";
+import { Task } from "./task";
 
-export interface TaskInput {
-  context: TaskContext;
-}
-
-export type TaskOutput = Record<string, any>;
-
-export interface TaskOptions {
-  deps?: string[];
-  executor: (params: TaskInput) => TaskOutput | Promise<TaskOutput>;
-}
-
-export interface FlowManagerOptions {
-  /**
-   * Timeout in milliseconds for each task (default: 30000 ms)
-   */
-  timeout?: number;
-  debug?: boolean;
-}
-
-const DEFAULT_FLOW_MANAGER_OPTIONS: FlowManagerOptions = {
+const DEFAULT_FLOW_MANAGER_OPTIONS: Required<FlowManagerOptions> = {
   timeout: 30000,
   debug: false,
 };
 
-export class Task {
-  public readonly id;
-  public readonly options: TaskOptions;
-
-  constructor(id: string, options: TaskOptions) {
-    this.id = id;
-    this.options = options;
-  }
-
-  async exec(input: TaskInput): Promise<TaskOutput> {
-    const response = this.options.executor(input);
-    return response instanceof Promise ? await response : response;
-  }
-}
-
+/**
+ * Manages a sequence of tasks, their dependencies, and execution order.
+ */
 export class FlowManager {
+  /**
+   * The unique identifier for the flow.
+   */
   public readonly id: string;
+  /**
+   * The list of tasks in the flow.
+   */
   private taskList: Task[] = [];
-  private options: FlowManagerOptions;
+  /**
+   * The options for the flow manager.
+   */
+  private options: Required<FlowManagerOptions>;
 
+  /**
+   * Create a new FlowManager instance.
+   * @param id - The unique flow identifier.
+   * @param options - Optional configuration for the flow manager.
+   */
   constructor(id: string, options: FlowManagerOptions = {}) {
     this.id = id;
     this.options = {
@@ -52,7 +42,17 @@ export class FlowManager {
     };
   }
 
-  public addTask(task: Task | string, taskOptions?: TaskOptions) {
+  /**
+   * Add a task to the flow. This method is polymorphic:
+   *
+   * - If called with a `Task` instance, it adds the task directly.
+   * - If called with a `string` (task ID) and `taskOptions`, it creates and adds a new Task.
+   *
+   * @param task - Either a Task instance or a string representing the task ID.
+   * @param taskOptions - The options for the task (required if task is a string).
+   * @returns The FlowManager instance (for chaining).
+   */
+  public addTask(task: Task | string, taskOptions?: TaskOptions): this {
     if (typeof task === "string" && taskOptions) {
       this.taskList.push(new Task(task, taskOptions));
     } else if (task instanceof Task) {
@@ -63,6 +63,12 @@ export class FlowManager {
     return this;
   }
 
+  /**
+   * Run all tasks in the flow, respecting dependencies and context.
+   * @param initialContext - The initial context for the flow.
+   * @returns The final context after all tasks complete.
+   * @throws If any task fails or a circular dependency is detected.
+   */
   public async run(
     initialContext: TaskInput = { context: {} }
   ): Promise<TaskOutput> {
@@ -127,6 +133,8 @@ export class FlowManager {
     this.debug("Finishing flow, waiting for all tasks to complete...");
     const ret = await Promise.allSettled(Object.values(taskProm));
     this.debug("All tasks completed.");
+
+    // Check for any rejected tasks
     if (ret.every((r) => r.status === "fulfilled")) {
       this.debug("Flow completed successfully.");
     } else {
@@ -141,6 +149,7 @@ export class FlowManager {
 
   /**
    * Detect circular dependencies in the task list and throw an error if found.
+   * @private
    */
   private detectCircularDependencys() {
     const visited = new Set<string>();
@@ -185,7 +194,12 @@ export class FlowManager {
     }
   }
 
-  private debug(...args: any[]) {
+  /**
+   * Print debug messages if debug mode is enabled.
+   * @param args - Arguments to log.
+   * @private
+   */
+  private debug(...args: unknown[]) {
     if (this.options.debug) console.debug(`[${this.id}] `, ...args);
   }
 }
