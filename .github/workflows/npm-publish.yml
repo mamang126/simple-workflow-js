@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
-      - run: bun ci
+      - run: bun install
       - run: bun test --coverage
 
   publish-npm:
@@ -25,7 +25,7 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           registry-url: https://registry.npmjs.org/
-      - run: npm ci
+      - run: bun install
       - run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}

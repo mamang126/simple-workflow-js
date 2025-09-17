@@ -1,6 +1,6 @@
 # simple-workflow-js
 
-[![Publish Package](https://github.com/mamang126/simple-workflow-js/actions/workflows/publish.yml/badge.svg?branch=main&event=status)](https://github.com/mamang126/simple-workflow-js/actions/workflows/publish.yml)
+[![npm-publish](https://github.com/mamang126/simple-workflow-js/actions/workflows/npm-publish.yml/badge.svg)](https://github.com/mamang126/simple-workflow-js/actions/workflows/npm-publish.yml)
 
 A lightweight, modular workflow/task orchestration library for JavaScript and TypeScript, built to run on [Bun](https://bun.sh). Define, sequence, and execute tasks (sync or async) with dependency management and context passing.
 
